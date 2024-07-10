@@ -4,6 +4,7 @@ Rails.application.routes.draw do
 
   # USERS
   post 'users' => 'users#create'
+  get 'users/:username/tweets' => 'tweets#index_by_user'
 
   # SESSIONS
   post 'sessions' => 'sessions#create'
@@ -12,7 +13,6 @@ Rails.application.routes.draw do
 
   # TWEETS
   get 'tweets' => 'tweets#index'
-  get 'users/:username/tweets' => 'tweets#index_by_user'
   post 'tweets' => 'tweets#create'
   delete 'tweets/:id' => 'tweets#destroy'
 
