@@ -1,57 +1,58 @@
 class TweetsController < ApplicationController
-    def index
-        @tweets = Tweet.all
-        render 'tweets/index'
+  def index
+    @tweets = Tweet.all.order(created_at: :desc)
+    render 'tweets/index'
+  end
+
+  def index_by_user
+    @user = User.find_by(username: params[:username])
+    @tweets = @user.tweets.order(created_at: :desc)
+
+    if @tweets
+      render 'tweets/index'
+    else
+      render json: { tweets: [] }
     end
+  end
 
-    def index_by_user
-        @tweets = Tweet.find_by(username: params[:username])
+  def create
+    token = cookies.signed[:twitter_session_token]
+    session = Session.find_by(token: token)
 
-        if @tweets
-            render 'tweets/index'
-        else
-            render json: {tweets: []}
-        end
+    if session
+      user = session.user
+      @tweet = user.tweets.new(tweet_params)
+
+      if @tweet.save
+        render 'tweets/create'
+      else
+        render json: { success: false }
+      end
+    else
+      render json: { success: false }
     end
+  end
 
-    def create
-        token = cookies.signed[:twitter_session_token]
-        session = Session.find_by(token: token)
+  def destroy
+    token = cookies.signed[:twitter_session_token]
+    session = Session.find_by(token: token)
 
-        if session
-            user = session.user
-            @tweet = user.tweets.new(tweet_params)
+    if session
+      @tweet = Tweet.find_by(id: params[:id])
 
-            if @tweet.save
-                render 'tweets/create'
-            else
-                render json: {success: false}
-            end
-        else
-            render json: {success: false}
-        end
+      if @tweet and @tweet.destroy
+        render json: { success: true }
+      else
+        render json: { success: false }
+      end
+    else
+      render json: { success: false }
     end
+  end
 
-    def destroy
-        token = cookies.signed[:twitter_session_token]
-        session = Session.find_by(token: token)
+  private
 
-        if session
-            @tweet = Tweet.find_by(id: params[:id])
-
-            if @tweet and @tweet.destroy
-                render json: {success: true}
-            else
-                render json: {success: false}
-            end
-        else
-            render json: {success: false}
-        end
-    end
-
-    private
-
-    def tweet_params
-        params.require(:tweet).permit(:message)
-    end
+  def tweet_params
+    params.require(:tweet).permit(:message)
+  end
 end
